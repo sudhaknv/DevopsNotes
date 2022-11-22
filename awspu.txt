@@ -1,0 +1,24 @@
+https://www.youtube.com/watch?v=4T9G9nv0GIk
+
+
+1 ec2 instance in public subnet can be connected from internet..
+1 ect instance in private subnet cannot be connected from internet..
+Publice subet will have route to internet where as private subnet wonthave any..
+
+Create vpc -->name (our wish)-->ipv4 cidr(10.200.0.0/16) and create, next immediately we have to associate vpc 	to internet gateways so that vpc can talk to internet.
+Create internet gateways -->Name(ourwish)-->Attach to VPC -->Yes i am in..
+Create Public Subnet -->Name (ourwish)-->Selecte right vpc-->AvailabiltyZone(we can select or leaveit)--->IPV4 CIDR block(10.200.0.0/24)-->Create.
+If we want to create public subnet (we have to create route table and then assign this to public subnet)
+Route table-->Name(publicRT A)-->VPC(select right VPC)-->we have to add a route to internet (by default route table can enter into only local VPC not from outside)
+to enable to and fro internet "Route"-->EDIT-->(0.0.0.0/0  and select internet gateway which was created) and make sure its associated to subnet associations
+subnet associations -->Edit(select subnet) -->save
+
+Create Private Subnet-->Name (ourwish)-->Selecte right vpc-->AvailabiltyZone(we can select or leaveit)--->IPV4 CIDR block(10.200.1.0/24)-->Create.
+Route table-->Name(privateRT A)-->VPC(select right VPC)-->we dont have to add it to  route to internet as we want as private RT and it shouldnt get connected to internet..
+Make Sure to associate to subnet associations """subnet associations -->Edit(select subnet) -->save"""
+
+Creating instance in public subnet and private subet
+Launch Instance--->Network(select created VPC)-->subnet(slect created public subnet)--->Auto assign publicIP (Enable)-->rest all same-->Security grp(nstead of custom slect myip) and done
+Private Instance -->Network(select created VPC)-->subnet(slect created public subnet)--->Auto assign publicIP (disable) -->rest all same-->Security grp(custom -->10.200.0.0/24 publicsubnetrange)  
+All ICMP -->custom -->10.200.0.0/24 publicsubnetrange)  
+

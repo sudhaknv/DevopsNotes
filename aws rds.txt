@@ -1,0 +1,1019 @@
+The three types of EC2 instances are:
+
+On-demand Instance
+It is cheap for a short time but not when taken for the long term
+Spot Instance
+It is less expensive than the on-demand instance and can be bought through bidding. 
+Reserved Instance
+If you are planning to use an instance for a year or more, then this is the right one for you.
+
+How to create RDS
+
+As a devops engineer we have to provide username pwd and endpoint to Devteam after creating RDS..
+RDS(Managed Relational Database Service)-->Create Db-->Standard Create-->MYSQL->Version(latest butone) -->freetier/prod-->DB name-->
+Credentials-->admin (create password)-->rest all go with default
+Backups-->Select 4days backups(prefer picking database in lowpeak time)
+Snapshot -->If we create RDS instance.AWS will create a backup (snapshot) for that database.
+RDS-->Snapshot-->Automated
+**note*** when we select create password after creating Database we will get option view credentials have to pick from there..
+
+Enable Delete Protection--->We have to select this at any cost so that we cant delete Database directly...
+
+
+Mysql port -->3306
+Master username
+admin
+Master password
+FVmiRLyiE8HLZ9JCneGq
+
+
+
+Elastic Ip address:
+ In aws EC2 instance will get changed dynamically to resolve this issue we have to go to elastic ip address.. 
+Allocate elastic ip address-->Instance name and attach..
+Once we attached ElasticIP to ec2 even after restart it wont get changed..
+we have two options
+1)Disassociate Elastic IP---> In this elastic IP wont get deleted from aws console we can attach if we want to another instance also..
+2)Relase Elastic IP--> It will permanently get released from aws console
+to recover released IP address if aws didnt assigned it to another instance
+aws ec2 allocate-address --domain vpc --address 203.0.113.3
+
+
+set hostname to ipaddress: sudo hostnamectl set-hostname ie1p1xrlow001
+or
+vi /etc/hostname
+
+Resize/upgrade downgrade: Disk cant be downgraded (once size ex from 400 to 500gb is increased we cant decrease it)..
+
+Increase DIsk size--> Two methods
+
+1)EBS (Increasing Root Volume):
+Copy ec2 instance ID-->elastic block store -->Volume--->copy instance id to filter our particular ec2-->actions-->modify volume-->Increase size 20Gb-->reboot
+To get changes reflected reboot is mandatory.
+
+2)Attaching External Disk
+volume-->Create volume-->rqrd disk-->region-->create volume-->Actions-->Attach volume-->select ec2-->attach
+"lsblk" command to check external disks attached..
+Attach this externals disk to root volume "mount EBS volume to EC2 Linux"
+
+Mount an EBS volume to EC2 Linux
+Step1 : Now, login to your ec2 instance and list the available disks using the following command.
+Lsblk
+
+
+Step 2: Check if the volume has any data using the following command.
+sudo file -s /dev/xvdf
+If the above command output shows “/dev/xvdf: data”, it means your volume is empty.
+
+Step 3: Format the volume to ext4 filesystem  using the following command.
+sudo mkfs -t ext4 /dev/xvdf
+
+Step 4: Create a directory of your choice to mount our new ext4 volume. I am using the name “newvolume”
+sudo mkdir /newvolume
+
+Step 5: Mount the volume to “newvolume” directory using the following command.
+sudo mount /dev/xvdf  /newvolume/
+
+Step 6: cd into newvolume directory and check the disk space for confirming the volume mount.
+.cd /newvolume
+df -h .
+
+
+To unmount the volume, you have to use the following command.
+umount /dev/xvdf
+
+
+
+EBS Automount on Reboot
+By default on every reboot the  EBS volumes other than root volume will get unmounted. To enable automount, you need to make an entry in the /etc/fstab file.
+Back up the /etc/fstab file.
+sudo cp /etc/fstab /etc/fstab.bak
+
+2. Open /etc/fstab file and make an entry in the following format.
+Standard Format:
+device_name mount_point file_system_type fs_mntops fs_freq fs_passno
+Example:
+/dev/xvdf       /newvolume   ext4    defaults,nofail        0       0
+
+3.Execute the following command to check id the fstab file has any error.
+sudo mount -a
+
+
+**********************************************************************************
+when we want same volume to be attached to another instance .. Instance will lose data which is already using from volume.. Inthis cases we have to take snapshot of
+existing volume and attach it to new instance by creating volume..
+
+Voulme-->create snapshot-->snapshot created..
+snapshot-->actions-->create volume from snapshot-->religion-->create volulme
+attach volume-->select instance
+
+Its an temp solutions -->when ever we rebooter instance it will leaves attached volumes...Again we have to give "sudo mount /dev/xvdf  /newvolume/"
+
+cd /etc/fstab (take backup of fstab while doing this activity)
+
+
+AMI & snapshot different..
+
+AMI
+EC2-->8gb ram,mysql,packages,disks attached,code it will take full backup of all those things incluing t2 or t3 etc...(entire server backup inclding versions)
+
+Snapshot---> it will take backup of only disks..
+
+s3--->S3 bucket is global (its not relgion independent).. We can say s3 is like a google drive...
+How many buckets can be created in s3 (100)
+s3 is free till 5gb..After that chargeble
+Multiple variants of objects or jar files maintaining in a same bucket is called as versioning..
+
+Create Bucket (s3 is a service and bucket is a component of s3 service)
+s3 bucket -->create bucket(name is universal like gmail id..duplicate names we cant create it will chck for availability) with versions(disable) to reduce price.. 
+(copy settings from existing bucket) We cant give s3 bucket access to all only limited access should be given.. 
+Lock all access from public access... We should restrict general public having access as it will have sensitive date..
+we have to acl permissions..
+Bucket version Enable -->If we replace any new file due to this versioning we can get stored old file in old version and new file in new version..We can retrieve files from versions..
+Once if we enable version we cant disable it only suspend s3 bucket is option...
+
+Enable verision-->Upload same file 3 times with change of some data eachtime.. Delete latest upload file and click on list versions.. 
+U can see deleted Version there...
+
+
+
+GO to buckets and upload files from our system this is in graphical method
+
+sudo apt-get update awscli
+in Command line enter aws configure --->give details of Aws access key id,Aws secret Key access (we will get those when we created IAM user)
+
+aws s3 ls --> To check list of buckets..
+aws s3 mb s3://sudhakar123
+
+uploading file to s3 bucket
+aws s3 cp /tmp/*.jar s3://sudhakar123
+
+****************************Storage classes & Life cycle Management*************
+We will decide type of storage based on priority of data...
+If we havent selected any storage type it will go to s3 standard...
+
+
+Types of Storage Class:
+S3 Standard (price will be high)  -->We will keep data which is frequently accessed so that availability,durabilty(99.99%),latency and performance will be very high...
+                                     Any data stored here will be saved in >=3 availabile zones..   
+S3 Intelligent-Tiering ---> Long-lived data with changing or unknown access patterns with >=3 availabile zones..   
+S3 Standard-IA --->  Long Lived infrequently accessed data with >=3 availabile zones
+S3 One Zone -IA --->Long-lived,infrequently accessed,non critical data with 1 availabile zone..
+S3 Glacier  --------->Long-term data archiving with retrieval times ranging from minutes to hours & will be saved in >=3 availabile zones..   
+S3 Glacier Deep Archive --->Long-term data archiving with retrieval times within 12 hours & will be saved in >=3 availabile zones..   
+s3 Reduced redundancy ------> Frequently accessed,non-critical data & will be saved in >=3 availabile zones..   
+
+Create bucket --->Upload item--->Additional Upload options there we can select which type of storage we want...
+
+-----------------------------------Life cycle Management--------
+Here we will decide objects from standard should be moved to another storage S3 Glacier like that ... we have to keep objects for min days..It can be done either
+ to whole bucket or folder level...
+
+GO to created bucket ---> Management tab--> Create life cycle rules--->we can mention conditions graphically like after how many days we can move etc...
+
+IAM users-->add users-->username-->
+Progmatic access--> Access to talk from instnace cli to aws instance
+AWS management console access--> Access to perform actions on AWS console User interface..
+
+MFA--->Click on gmail accountname(on top right side)-->Security credentials-->MFA--->Activate MFA --->we will have 3options -->
+Virtual MFA DEVICE --->Like android phone etc code will get generated we have to enter here (like RSA).. We can also select google authentication,
+Security Key ---> 
+Other Hardware MFA Device --->
+
+
+----->Load Balancer----->
+
+Q) Types of load Balancers:
+ so basically there are two kinds of load balancers, right. So one is an application load balancer and second one is kind of a network load balancer. So network load balancer usually 
+ worked at the layer four of the OSI model, and the application load balancer will work at the layer seven. So network load balancer is just like it is very fast where it will 
+ just identify the source IP and source port and the destination IP and the destination port and it will route the network packet to the destination server. But when it comes to the
+application load balancer, it is an intelligent load balancer Where it will be able to identify the HTTP header as part of each and every network packet and it can make the routing 
+decisions based on the HTTP header. Yes, yes, we are using application load balancer ingress gateway with our kubernetes clusters
+
+Create 2 instances
+
+Target group for 1st instance:
+Create target group-->Type ec2 instanace--> Protocol http-->port 80-->vpc(we have to select ec2 vpc)
+Health check-->path /url orders/index.htm/ and create..
+register both instances in target group...
+
+
+
+Now go to Load Balancer:
+Application LB-->name-->scheme(internet facing) -->IP address (IPv4)-->Listeners(http 80)-->Availabilty Zones(vpc default and selct all availblty zones)
+Configure settings-->Leave it empty as we dont have any ssl certs
+Configure Security Groups-->select an existing security grp
+Configure Routing -->TargetGroup(Existing Group) ,name(selct from tmplate),
+Register,Review and create..
+
+ if we create two target groups with 1 instance in each target group we can apply listeners like below...
+Now goto listeners--->It will be like HTTP:80 and Rules Default(which means any request coming on 80 port will land on default)..Assume 1 instance in orders and 2nd instance is payments
+View or edit rules-->Add rules-->path (/orders/*) add actions (orders) 
+do same for another rules orders... Now we have 3 rules 1)orders 2)payments 3)Default.. Once we got hit if it contains orders wil redirect to orders same like..
+
+Load Balancer-->Description-->copy DNS Name-->enter in browser ending with payments it will reach to payments page..
+
+
+
+
+Auto Scaling--->
+
+Auto Scaling:
+
+When we came into requirement of increasing servers auto	scaling will be helpful..
+
+prerequistes for autoscaling:
+
+sudo apt-get install apache2 -->edit inbound rule and add port 80 ---> open in browser with public ip http://3.142.131.246/
+ cd /var/www/html;index.html in browser it will displays matter written in html file
+
+1)Ami of existing instance
+Actions--->create image and template;
+ImageName --->ivy_bkp
+create image --->Image will get created under AMI section
+
+AutoScaling--->Launch COnfiguration --->Create launch COnfiguration
+Name -->our wish
+AMI -->we have to select our AMI created from template.
+Instance Type ---> Here we can increase or keep same configurations (DEV will provide u)
+create Security Group ---> we have to careful while selecting security group..
+what ever we selected for old instance we have to selcte same for AMI also else routing wont happened 
+
+2)Actions --->Create Auto Scaling Group
+step 4--->COnfigure group Sze and scaling policies
+Desired Capacity --->DESIRED: If you trip a CloudWatch alarm for a scale up event, then it will notify the auto scaler to change it's desired to a specified higher amount and the auto scaler will start an instance/s to meet that number. If you
+ trip a CloudWatch alarm to scale down, then it will change the auto scaler desired to a specified lower number and the auto scaler will terminate instance/s to get to that number.
+Minimum Capacity --->MIN: This will be the minimum number of instances that can run in your auto scale group. If your scale down CloudWatch alarm is triggered, your auto scale group
+ will never terminate instances below this number
+Maximum Capacity --->MAX: This will be the maximum number of instances that you can run in your auto scale group. If your scale up CloudWatch alarm stays triggered, your auto scale
+ group will never create instances more than the maximum amount specified.
+
+Scaling Policies--->target scaling policy (If its none it cant understand when to do autoscaling)
+Metric CPU Utilization --->85% (value to which autoscaling to be done)
+Instances need --->300sec (Here after reaching cpu to 85% will wait 300secons and still if its greater that 85 % then will create new one)
+Once autoscaling creation is done we can see new instance getting created in EC2 and if any 1 instance got terminated or cpu value is crossed it will launch auto instance..
+
+TO check autoscaling is working or not ---> yes > /dev/null & --->cpu will reach to 100%, execute killall yes to reduce cpu %
+
+
+************************************************************************************
+
+VPC:
+
+your vpcs-->we will have 1 default vpc given by aws, But we have to have our own VPC as aws will have thousands on instances of another company also in datacenter,
+for security purpose like chances of connecting to our company servers are high..we are creating our own VPC...
+
+if we have ips like 172.32.0.0/16 ( /16 means we will have 65000+ ips,  /32 means only single IP)
+/32 means 2power0=1( 1 ip), 31 means 2power1(2 ips) 30 means 2power2(4ips) .....16 means 2power16=65536 ips
+subnet means ---> Dividing bignetwork is called as subnet..
+
+ex: 172.31.0.0/16 ---> We have 3 projects and we are dividing them with 3 subnets... we can divide till 65000 ips..for those 3 it will be starting 2 octet will be 172.31.*.*
+
+Best EX: Internet dividing to individual houses from main router in area wise..
+
+https://www.youtube.com/watch?v=4T9G9nv0GIk
+
+
+1 ec2 instance in public subnet can be connected from internet..
+1 ect instance in private subnet cannot be connected from internet..
+Publice subet will have route to internet where as private subnet wonthave any..
+
+Create vpc -->name (our wish)-->ipv4 cidr(10.200.0.0/16) and create, next immediately we have to associate vpc 	to internet gateways so that vpc can talk to internet.
+**********select VPC-->Actions (edit dns hostname) and enable it...
+
+Create internet gateways -->Name(ourwish)-->Attach to VPC -->Yes i am in..
+Create Public Subnet -->Name (ourwish)-->Selecte right vpc-->AvailabiltyZone(we can select or leaveit)--->IPV4 CIDR block(10.200.0.0/24)-->Create.
+If we want to create public subnet (we have to create route table and then assign this to public subnet)
+Route table-->Name(publicRT A)-->VPC(select right VPC)-->we have to add a route to internet (by default route table can enter into only local VPC not from outside)
+to enable to and fro internet "Route"-->EDIT-->(0.0.0.0/0  and select internet gateway which was created) and make sure its associated to subnet associations
+subnet associations -->Edit(select subnet) -->save
+
+Create Private Subnet-->Name (ourwish)-->Selecte right vpc-->AvailabiltyZone(we can select or leaveit)--->IPV4 CIDR block(10.200.1.0/24)-->Create.
+Route table-->Name(privateRT A)-->VPC(select right VPC)-->we dont have to add it to  route to internet as we want as private RT and it shouldnt get connected to internet..
+Make Sure to associate to subnet associations """subnet associations -->Edit(select subnet) -->save"""
+
+Creating instance in public subnet and private subet
+Launch Instance--->Network(select created VPC)-->subnet(slect created public subnet)--->Auto assign publicIP (Enable)-->rest all same-->Security grp(nstead of custom slect myip) and done
+Private Instance -->Network(select created VPC)-->subnet(slect created public subnet)--->Auto assign publicIP (disable) -->rest all same-->Security grp(custom -->10.200.0.0/24 publicsubnetrange of from which instance we want to connect)  
+All ICMP -->custom -->10.200.0.0/24 publicsubnetrange from which instance we want to connect)    
+
+We want keypair to login from public to private subnet:
+In public net ec2--->VI demo.pem(copy paste content inside keypair pem file),change permissions and connect from Public to private instance)
+
+
+
+As per architecture
+ we have to communicate from ec2 B to ec2 A-->we cant open or do ssh directly to Ec2 B from internet as its private Subnet but we should be able to get connected from EC2 A.
+we will open complete subnet from public so that any instances in public can talk to private subnet...
+
+
+
+10.0.40.0/24	
+
+
+                                          AWS ECR (Elastic container Registry):
+Amazon ECR hosts your images in a highly available and scalable architecture, allowing you to reliably deploy containers for your applications. Amazon ECR is also highly secure. 
+Your images are transferred to the registry over HTTPS and automatically encrypted at rest in S3.
+
+Prerequites-->EC2 with docker installed
+IAM role with Amazon ec2 container registry with full access... Select ec2 instance with docker isntalled -->settings-->attach created IAM role..(required to pull containers from EC2 to ECR)
+
+Create amazon ECR-->
+COntainers--->ECR-->Create Repository-->repo name==>Create repo
+Click on reponame-->we can see push commands for repo(We will have full details step by step including authentication)
+
+Push commands for Docker Repo:
+
+ECS:
+ECS maintains the availability of application and allows every user to scale containers when necessary...Its an container management service which can quickly launch,exit and 
+manage Docker containers on a cluster...
+
+Pending topic --->ROute 53
+Route 53-->will be similar to DNS....DNS port number is 53 so its named as ROute53
+
+AWS X-RAY:AWS X-ray is a monitoring tool where we can trace api call from end to end in service map... We can also filter based on response time,We can filter based on groups with
+URL, or response codes only with 500 etc...For installation we have to add we few lines in pom.xml and run few commands in instance (we will get from aws doc)
+
+
+
+ Connection Draining:
+If Connection Draining is enabled, the Load Balancer will allow an outgoing instance to complete the current requests for a specific period but will not send any new request to it. 
+Without Connection Draining, an outgoing instance will immediately go off and the requests pending on that instance will error out.
+
+Is there a way to upload a file that is greater than 100 Megabytes in Amazon S3?
+Yes, it is possible by using the Multipart Upload Utility from AWS. With the Multipart Upload Utility, larger files can be uploaded in multiple parts that are uploaded independently. You can also decrease upload 
+time by uploading these parts in parallel. After the upload is done, the parts are merged into a single object or file to create the original file from which the parts were created
+
+
+------------------------------------CDN Content Delivery Network----------------------------------
+in order to solve Latency problem, you can do something called as an AWS CloudFront which is nothing but a content delivery network. So, what eventually a content delivery 
+network provides is nothing but a global distributed network of a proxy servers. And these proxy servers will be located closest to the physical location of the end users and 
+it will cache all the content like the videos or images etc. And, and other bulky media. So, when, when we actually do this, the end users are actually distributed geographically
+ they will be able to access the application with the same access times without any latency.
+
+amazon cloudfront:
+
+Amazon CloudFront is a web service that gives businesses and web application developers an easy and cost effective way to distribute content with low latency and high data 
+transfer speeds.
+ 
+AWS Cloud Front----------->
+Amazon cloudfront is a webserive that speeds up distribution of your static and dynaminc web content,such as html,css, and image files to users...
+It mainly focuses on 3 things 1)Routing 2)Edge locations 3)More availability
+
+1)Routing 2)Edge locations 3)More availability--->Data will get delivered to enduser with series of networks..Cloudfront ensures that there are quite a few edge locations that are 
+located close to user.. And data is cached from main server so that it can give data to user without any latency...
+
+
+Creating aws cloudfront in aws:
+Imagine data is placed in particular server (FOr practise consider its in s3 bucket with some objects and accessing them with cloudfront distribution)
+Create s3 bucket-->upload image and sample html page(ndex.html)..
+Cloudfront -->Distribution-->web-->origindomain name(s3 url)-->and proceed with all options (Use all edge locations (best performance)) and create... Now when user give hit to url
+it will serve from nearest location instead of main server..
+
+AWS Direct Connect:
+AWS Direct Connect enables you to securely connect your AWS environment to your on-premises data center or office location over a standard 1 gigabit or 10 gigabit Ethernet 
+fiber-optic connection. 
+
+Aws CLoud Formation:
+ 
+ 
+ ********************************AWS WAF***********************
+ 
+ Protects our webapplications from common web exploits and DDOS attacks...	   
+ 
+ 
+AWS instance types:
+EC2 Instance Savings Plans
+Compute Savings Plans
+Standard Reserved Instances
+Convertible Reserved Instances
+On-Demand Instances
+ 
+**************************************************************************************************
+                                                 Terraform:
+
+1)download and Install visualstudiocode in windows-->
+2)Install aws cli configurations and harshicorp in visualstudiocode
+3)Install aws cli on windows also (once istalled check aws --version on cmd prompt)
+4)Create an IAM user with Admin access and download csv file
+5)Install terraform packages(we have to copy .exe file in C:\Windows\System32
+
+create folder and save file with .tf extension,visualstudiocode -->open folder-->navigate and select folder,Terminal--->new terminal-->Copy code and execute 3 commands
+
+
+once ec2 created check security inbound rules if ssh is opened or not..
+
+provider "aws" {
+  
+  region     = "us-east-2"
+}
+
+resource "aws_instance" "Demo" {
+  ami           = "ami-092b43193629811af"
+  instance_type = "t2.micro"
+  key_name = "aws-keypair"
+  tags = {
+    Name = "Demo"
+  }
+}
+
+These are the 4 commands to be executed:
+
+Terraform init
+terraform plan
+terraform apply
+terraform apply -auto-approve
+terraform destroy --> It will delete created instance
+terraform state list
+
+
+https://www.youtube.com/watch?v=5jwYGCAr_pw&ab_channel=JavaHomeCloud ---> Terraform running with Jenkins 
+	
+************************************************************************************Docker******************************
+VM vs Docker:
+
+Virtual Machine : Previously we used VMS where its structure is like this--->Server-->HOst os-->Hypervisor(vm ware software)-->Multiple OS--->bins/libs/APplications
+Docker : Server--->Host os---> DOcker Image-->Docker Engine--->Multiples OS 
+
+
+Major difference is again no need to install OS on each server Docker will share OS from image basic bin & lib files to run application.
+
+
+
+Run image --->Container	
+	
+docker pull ubuntu -->Docker images (to check ubuntu image is downloaded or not)
+we will take images from dockerhub
+docker run -it(interactive terminal) imageid
+to check docker containers docker ps and running containers docker ps -a
+Jenkins initial setup is required. An admin user has been created and a password generated.
+Please use the following password to proceed to installation:
+
+16a71bacc3fa4f6d9af251954829b91a
+
+This may also be found at: /var/jenkins_home/secrets/initialAdminPassword
+
+
+1)docker images
+2)docker run -it imageid (image to container)
+docker run -itd imageid (will create container but dont enter into container)
+docker exec -it cid /bin/bash (to enter into container and execute commands)
+3)docker ps (running containers)
+4)docker ps -a (stopped containers)
+docker ps -aq (will display only container ids)
+5)docker attach cid (to enter inside container)
+6)ctrl pq (to exit from running container without stopping container)
+7)docker start/stop cid and docker restart cid to restart
+8)docker rename oldname newname (to change containername) or docker run -it --name sudhakar imageid 
+docker stop $(docker ps -aq) to stop all containers
+docker rm ${docker ps -aq} -f to remove all containers at a time
+
+
+	
+	
+	
+***************************************************************Kubernetes****************************
+
+Kubernetes, at its basic level, is a system for running and coordinating containerized applications across a cluster of machines. It is a platform designed to completely manage 
+the life cycle of containerized applications and services using methods that provide predictability, scalability, and high availability.
+
+
+
+EKS cluster:
+
+https://www.youtube.com/watch?v=8Hu-t8XwCDM&ab_channel=TeluguTechies
+
+Kubernetes contains master and worker nodes...
+
+# Setup Kubernetes on Amazon EKS
+
+You can follow same procedure in the official  AWS document [Getting started with Amazon EKS – eksctl](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html)   
+
+#### Pre-requisites: 
+  - an EC2 Instance 
+
+#### AWS EKS Setup 
+1. Setup kubectl   
+   a. Download kubectl version 1.20  
+   b. Grant execution permissions to kubectl executable   
+   c. Move kubectl onto /usr/local/bin   
+   d. Test that your kubectl installation was successful    
+   ```sh 
+   curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+   chmod +x ./kubectl
+   mv ./kubectl /usr/local/bin 
+   kubectl version --short --client
+   ```
+2. Setup eksctl   
+   a. Download and extract the latest release   
+   b. Move the extracted binary to /usr/local/bin   
+   c. Test that your eksclt installation was successful   
+   ```sh
+   curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+   ```
+  
+3. Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+Attach IAM role to EC2
+4. Create your cluster and nodes 
+   ```sh
+   eksctl create cluster --name cluster-practise  \
+   --region us-east-2 \
+   --node-type t2.micro \
+   --ssh-access \
+    --ssh-public-key myKeyPair
+
+   --nodes-min 2 \
+   --nodes-max 2 \ 
+   --zones <AZ-1>,<AZ-2>
+   
+   example:
+   eksctl create cluster --name sudhakar-cluster \
+      --region us-east-2 \
+	  --ssh-access \
+      --ssh-public-key aws-keypair
+	  --node-type t2.micro \
+   
+    ```
+
+5. To delete the EKS clsuter 
+   ```sh 
+   eksctl delete cluster valaxy --region ap-south-1
+   ```
+   
+6. Validate your cluster using by creating by checking nodes and by creating a pod 
+   ```sh 
+   kubectl get nodes
+   kubectl run pod tomcat --image=tomcat 
+   ```
+
+Delete cluster:
+eksctl delete cluster cluster-practise --region us-east-2
+
+How to create POD(Equal to container) -->pod contains container infos c1,c2 etc.. In real time we will maintain 1pod for 1 container.. 
+If we got another one another pod & cntainer..Multiple container's  or services in same pods will create prblem like 1 service facing any issue will impact
+ another service..
+Manifest file (.yaml file (to create pod) --->it contains api version,
+Deployments
+services
+
+In kubectl if health of any pod is failing it will identify early ..WIll kill itself and start the node..
+
+kubectl get nodes --->to display number of nodes including whi
+kubectl run nginx--image=nginx ---->pod will get created 
+kubectl get pods -->to check created pods (kubectl get pods -o wide) to check on which container that pod created..
+kubectl describe pod nginx --->will give full details of pod..
+kubectl delete pod nginx -->to delete pod
+
+we can create pods with commands and also with manifest files:
+
+
+
+Manifest File: --> manifest mainly files contains apiVersion,kind(pod,deployment,services),metadata and spec..
+
+#create pod in kubernetes using manifest
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-web
+  labels:
+    role: myrole
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
+		  
+kubectl create -f pod.yaml -->to execute yaml file..
+-------------------------------------------------
+   --->In this Deployment we can mentiond scale up also (POD only 1) -->replicas 4 (4 pods will get created) we will use same in real time..
+   1st spec related to pod and 2nd spec related to image details..
+   
+apiVersion: apps/v1   (in POD we will have only v1,here its apps/v1)
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80  
+		
+kubectl get deploy to check images got deployed or not....
+
+
+aws eks update-kubeconfig --region region-code --name my-cluster
+		
+Once above deployment is done if we open with ipaddress:80 it wont get opened we have to write services to get opened..
+Once service manifest is deployed.. created cluster will connect to aws ,Creates LB and also starts distributing load equally in between containers..
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app.kubernetes.io/name: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+  clusterIP: 10.0.171.239
+  type: LoadBalancer
+status:
+  loadBalancer:
+    ingress:
+    - ip: 192.0.2.127
+	
+	kubectl get svc to check created load balancers...
+	
+	Now we can open from outside with dns name instead of individual server name...
+
+*****************************NOTE app name should be same in both deployment and Service...
+
+Kubernetes command line (kubectl):
+Kubectl is a command line tool used to run commands against Kubernetes clusters..
+
+
+Rolling strategy/updates:
+while its running on V1 we can update to V2 incase of any issue on V2 we will rollback to v1...
+
+
+
+Image is nothing but Developer service created by Devteam ..we will keep it on Docker Hub or in ECR ..
+Sample for Blue and Green:
+Install docker..
+Bringing Image from docker hub --->will do deployment and will create Service with load balancer...
+
+Create deployment and service with 1 any image and when u checked with LB we will get displayed some data (EX: my image version1)
+Now create service for deployment with another image and refresh page it will display 2nd image content in browser..
+
+RollBack:
+kubectil rollout undo deployment Name (o/p from rs) it will get rollback to v1...
+kubectil get rs will display pods information like time of deploy etc...
+kubectl describe deploy Name (o/p from rs) will give full details of pod..
+
+
+Blue  and Green Deployment: Its very costly
+
+We will create replica of production version v1 and will create V2 and to check how its working on production we will deploy on production but wont expose it to outside world..
+For out side world V1 is accessible once v2 is fine we have to Flip from v1 to V2....
+
+Pod which is already is in prodcution is called blue Deployment...pod with containers v1...
+
+Green Deployment: Its a test setup here we have to create same like 3 replicas,Containers,LB with V2 and once testing is fine...We have to bringup V2 while v1 is running..
+
+sudo cp deployv1.yml deployv2.yml
+just change images names in both..
+
+ For green Deployment (its for qa deploying on same pod where deploy1.yml is running)
+vi deploy2.yml
+
+apiVersion: apps/v1   (in POD we will have only v1,here its apps/v1)
+kind: Deployment
+metadata:
+  name: nginx1-deployment
+spec:
+  selector:
+    matchLabels:
+      app: version2
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: version2
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.3
+        ports:
+        - containerPort: 80  
+		
+same like create another load balancer with name changes ..loadBalancer2.yml
+
+Dev will open above loadBalancer DNS name and will check functionality and once they confirmed its fine (End customers knows only loadBalancer1 URL not aware of 2.yml)
+now we have to flip blncr2.yml dns url to blncr1.yml which is live..
+
+sudo vi loadBalancer1.yml
+
+Here we have to only change app name in selector... Give selector appname of loadBalancer2 and kubectl apply.. U will see v2 changes to end customers...
+
+
+
+-----------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------Maven---
+
+Java versions should be same on our local lappy and in linux server
+
+
+maven installation -->in our lappy-->cmd--> java -version and mvn -version should be there (along with environment variable settings)
+C:\Program Files\Java\jdk1.8.0_202
+C:\Program Files\Java\jdk1.8.0_202\bin
+
+%MAVEN_HOME%\bin
+
+Maven is a java based developed tool...
+types of repos in Maven
+1)Central repository --->When we enter 1st command it will connect to central repository(mvn official website) will get data and will stored in our lappy C: drive
+2)Local repository  --->When we enter command from 2nd time... It wont get connected to central repository will get data from our lappy..
+3)Remore repository --->banks etc wont use thirdparty folder structure...Here dev will create own folder structure and will push it to Remote repository..
+
+Folder structure:
+
+cmd-->mvn archetype:generate (this will download all folder structure types from Maven Remote Repo to our lappy)
+mvn archetype:generate > outputstructure (to check in our lappy)
+Define value for property 'groupId': Entain
+Define value for property 'artifactId': Login
+Define value for property 'version' 1.0-SNAPSHOT: :
+Define value for property 'package' Entain: :
+Confirm properties configuration:
+groupId: Entain
+artifactId: Login
+version: 1.0-SNAPSHOT
+package: Entain
+
+
+Once above steps are done we will see src and pom.xml inside login folder in our lappy... 
+
+To push those codes to GIT REPO: Create repo and branch in GIT
+
+rightclick where pom.xml etc codes are there(git bashhere and follow these steps)
+git init
+git status
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/sudhaknv/login.git
+git push -u origin main
+
+Once artifact is ready we have to deploy it to uat/prod..
+
+**************************************
+
+
+Build Life cycles:
+validate (mvn validate) - validate the project is correct and all necessary information is available
+compile - compile the source code of the project (target folder will be created after executing)
+test - test the compiled source code using a suitable unit testing framework. These tests should not require the code be packaged or deployed
+package - take the compiled code and package it in its distributable format, such as a JAR.
+verify - run any checks on results of integration tests to ensure quality criteria are met
+install - install the package into the local repository, for use as a dependency in other projects locally (will create jar file in target folder)
+deploy - done in the build environment, copies the final package to the remote repository for sharing with other developers and projects.
+
+CLean install (it will clear Target folder once and will build new artifact (jar) with new source code)
+
+
+
+**********************************************************************Jenkins****************************************
+
+Install jenkins in linux server..
+ Add description ---> As we will have 60 and more jobs in our dashboard.. Add a notepad to refer things so that we wont forgot..
+ 
+Create a job -->
+Freestyle project --->It runs based on plugins
+pipeline project --->It runs on based on scripts
+
+
+Build trigger:
+1)Trigger builds remotel -->we can execute build from mobile or ask our colleague to enter that url ..it will execute build..
+Authenticate build(set a pwd)-->http://3.144.188.9:8080/job/test/build?token=TOKEN_NAME 
+2)Build after other projects are built --->
+3)Build periodically ---> It will execute buildnow by the time time set in cron
+4)GitHub hook trigger for GITScm polling --> If any changes done on github it will immediately build trigger.
+login to github--> settings-->webhooks-->addwebhook-->payloadurl(have to give jenkins url/github-webhook/)--->content type (json)-->Add webhook
+5)Pollscm (Realtime we will use this) ----> It will execute on crontime and will execute build only if any changes are done..If no changes in repository it wont trigger build
+
+
+free style -->github (url of gitproject which we want to automate"--->credentials --->Branches to build(main)-->Build Trigger (Build Periodically --add cron)-->
+Builstep(invokeMvn) cleaninstall
+error :sudo: no tty present and no askprgm specified --->sudo visudo -->root    ALL=(ALL:ALL) ALL
+                                                                        jenkins ALL=(ALL:ALL) ALL NOPASSWD: ALL
+When we have more builds to run instead of having them in queue we can increase number of executors (10) etc.. so that it can build 10 jobs at a time parallel
+Manage jenkins-->configure system-->number of executors (10)	
+
+Master and Slave in Jenkins:
+
+Manage Jenkins---> Manage nodes and clouds: new node-->
+Name(slave1)-->Description(creating slave1)--->no of exec(5)-->remoterootdirectory (path to where our assets to be copied /home/jenkins give full perms)
+Launch method(Launch agent via ssh)-->host (another instancepublicip)-->credentials (ubuntu) and copy pem file and save.
+
+Now it will launch agent..If its in offline(check java,mvn installed or not and 777 perms given to remote directory mentioned)
+Now build with option restrict 
+
+
+Plugins:
+View Plugins --->instead of having 100's of jobs in a single page we can categorize like nightbuild jobs,day jobs its similar to having files in folders..
+                 click on + beside all (jobs)-->view name (prodjobs)-->list view (select jobs which are on prod) and save ... now u can see prod jobs in this section
+
+
+nested view-->folders inside folders
+restart --->http://18.219.101.129:8080/restart --->it will restart from browser
+safe restart ---> It will check if any jobs are building and only restart if no crons are scheduled and builds happening for that time...
+discard old builds ---> configure -->inside project --->Days to keep builds (10days) will delete builds above 10days to reduce diskspace...
+                        Max # of builds to keep --->10
+TimeStamp ---> Add timestamp to the console output-->will add timestamp in console logs...
+Abort the build if it stucks--->if build get stucked more time it will get aborted and we will also get mail notification..mention timeout (5mins)
+poll scm
+Build periodically
+Github hook trigger for GIT scm
+Build executor Status
+
+Global tool configuration -->If we want jenkins to build with different java,maven versions we can do it without installing in instances..
+                             Jdk-->add jdk--->name(java9)-->version(selct)-->I agree java->give oracle acoount credentials(to bring java in backend)-->save
+                             add another two more JDK's
+							 Maven--->3.8.1
+							          3.8.2 and Save..COnfigure project--->JDK-->select required java and build now..
+disk usage ---> will show
+Thin Backup plugin --->to take jenkin jobs backups..
+                       Manage jenkins-->thin backup-->settings--->path in server with full perms(/opt/backups/)--> Backupschedule (cronjab)-->
+Notification -->Manage jenkins-->Configure system-->system admin e-mail address-->mail-id(from it will display ur name)
+                EMail Notification-->SMTP server(smtp.office365.com)
+                Default user email suffice-->@gmail.com
+                USE SMTP authentication-->username,pwd..,SMTP port 25-->Save   
+ 				
+	                         
+scripted Pipeline--->
+
+
+step 1) Checkout GIt repository
+
+
+
+
+node{
+    stage{'gitcheckout'}{
+        git branch: 'main', credentialsId: '9b80ac63-e885-4c92-bed8-115e683bd6ba', url: 'https://github.com/sudhaknv/login.git'
+    }
+
+}
+
+
+Declarative Pipeline:
+
+pipeline {
+    agent none 
+    stages {
+        stage('Example Build') {
+            agent { docker 'maven:3.8.1-adoptopenjdk-11' } 
+            steps {
+                echo 'Hello, Maven'
+                sh 'mvn --version'
+            }
+        }
+        stage('Example Test') {
+            agent { docker 'openjdk:8-jre' } 
+            steps {
+                echo 'Hello, JDK'
+                sh 'java -version'
+            }
+        }
+    }
+}
+
+
+Continous Deployment with Ansible Yaml file integrated in Jenkins:
+
+Build will happen with Jenkins and Deployment with Ansible as we cant deploy on some of complex environment...so we are integrating with external tool Ansible..
+
+Scenario :
+
+Code commit to git-->Build & Test with Jenkins-->Initialize Ansible-->Deployment of war file to Apache Tomcat.
+						
+https://www.youtube.com/watch?v=nE4b9mW2ym0
+
+1. Enable password less authentication b/w Ansible and tomcat server
+2. Install"publish over ssh" plug-in on Jenkins server
+3. Write a playbook to copy jar/war file on to tomcat server
+4. Modify Jenkins job to copy artifacts and initiate Ansible playbook
+
+
+1)Install Ansible and create user (useradd sudha)---> visudo (sudhakar ALL=(ALL) NOPASSWD: ALL and save it.. Now it wont ask for pwd when running playbook.
+passwd sudha for setting password to user...
+2)Same way do it in Tomcat server also...Perform below steps on ansible server..
+to make it password less authentication
+su -  sudha
+ssh keygen
+ssh -copy-id destip
+
+vi /etc/ansible/hosts (add groupt name and destip)
+
+ansible all -m ping (to check for connectivity)
+
+2. Install"publish over ssh" plug-in on Jenkins server
+
+3)Write a playbook to copy jar/war file on to tomcat server
+[ansadmin@ip-172-31-19-68 playbooks]$ cat copyfile.yml
+---
+- hosts: web-servers #(if its 100 or 1000 servers in this grp it will get deployed on all)
+  become: true    #execute this as a root user...
+  tasks:
+    - name: copy war onto tomcat server
+      copy:
+        src: /opt/playbooks/webapp/target/webapp.war
+        dest: /opt/apache-tomcat-8.5.32/webapps
+		
+
+
+Manage Jenkins --->Configure System--->GIve access to jenkins to execute some playbooks on ansible server
+
+Publishover ssh-->
+ssh Servers -->Name(ansible)-->Hostname(private IPs)--->Username(sudhakar)--->Advanced(Use pwd based authentication)-->passphrase/password(give sudha pwd) ..Test configuration(to chk cnctvty)
+Once build is done in jenkins artifacts will be in jenkins only.. we have to copy it to Ansible server..
+
+Take another ssh servers and add below step as multiple tasks in single server may or maynot work...
+Post steps-->send files or execute connection over SSH -->give src,destfile and Exec Command(anisble-playbook /opt/playbooks/copyfile.yml
+
+
+----------------->jenkins with terraform------------
+
+After terraform installed-->GLobal tool configuration-->terraform--->Add terraform-->name(tfm)-->install directly(/usr/bin)-->and save..
+
+Project-->Enter an item-->Pipeline-->
+
+pipeline {
+    agent any
+    stages {
+        stage('Example') {
+            steps {
+                echo 'Hello World'
+            }
+        }
+    }
+    post { 
+        always { 
+            echo 'I will always say Hello again!'
+        }
+    }
+}
+
+Jenkins used pluging:
+
+Publish over shh
+Terraform
+
+****************************************************************************************Nagios********************************8
+
+
+2  ip a
+    3  modinfo dummy
+    4  insmod /lib/modules/5.10.144-127.601.amzn2.x86_64/kernel/drivers/net/dummy.ko 
+    5  ip a
+    6  rmmod /lib/modules/5.10.144-127.601.amzn2.x86_64/kernel/drivers/net/dummy.ko 
+    7  ip a
+
+
+***********************************************************GIT*****************************
+
+Assume dev is ready with code and he wants to push code to github.com (central repository) we have to cross 3stages
+
+1)working area   ----->this is where we are writing our files in local lappy
+2)staging area   -----> git add * or git add -A it will add files from working area to staging area..The staging area can be considered as a real area where git stores the changes.
+3)local repository ----> git commit -m "my 1st commit" it will mv fils from staging to local repo..
+4)
+
+git status --->if files are in red color it means its in working area...if its in green then staging area..
+
+
+navigate to git directory and give git init command 
+					
+                                                                          

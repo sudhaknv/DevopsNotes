@@ -1,0 +1,124 @@
+Kubernetes Architecture keypoints:
+Master
+The master node is the most vital component of Kubernetes architecture. It is the entry point of all administrative tasks. There is always one node to check for fault tolerance.
+
+The master node has various components, such as:  
+
+ETCD
+Controller Manager 
+Scheduler
+API Server
+Kubectl
+1. ETCD
+This component stores the configuration details and essential values
+It communicates with all other components to receive the commands to perform an action.
+Manages network rules and post-forwarding activity
+2. Controller Manager
+A daemon (server) that runs in a continuous loop and is responsible for gathering information and sending it to the API Server
+Works to get the shared set of clusters and change them to the desired state of the server 
+The key controllers are the replication controllers, endpoint controller, namespace controllers, and service account controllers
+The controller manager runs controllers to administer nodes and endpoints
+3. Scheduler
+The scheduler assigns the tasks to the slave nodes
+It is responsible for distributing the workload and stores resource usage information on every node
+Tracks how the working load is used on clusters and places the workload on available resources.
+4. API Server
+Kubernetes uses the API server to perform all operations on the cluster
+It is a central management entity that receives all REST requests for modifications, serving as a frontend to the cluster
+Implements an interface, which enables different tools and libraries to communicate effectively
+5. Kubectl
+Kubectl controls the Kubernetes cluster manager
+        Syntax - kubectl [flags]
+
+Slave
+The slave node has the following components:
+
+1. Pod
+A pod is one or more containers controlled as a single application
+It encapsulates application containers, storage resources, and is tagged by a unique network ID and other configurations that regulate the operation of containers
+2. Docker
+One of the basic requirements of nodes is Docker
+It helps run the applications in an isolated, but lightweight operating environment. It runs the configured pods
+It is responsible for pulling down and running containers from Docker images
+3. Kubelet
+Service responsible for conveying information to and from to the control plane service
+It gets the configuration of a pod from the API server and ensures that the containers are working efficiently
+The kubelet process is responsible for maintaining the work status and the node server
+4. Kubernetes Proxy
+Acts as a load balancer and network proxy to perform service on a single worker node
+Manages pods on nodes, volumes, secrets, the creation of new containers, health check-ups, etc.
+A proxy service that runs on every node that makes services available to the external hos
+
+*************************************************************************************************************************
+
+EKS cluster:
+
+https://www.youtube.com/watch?v=8Hu-t8XwCDM&ab_channel=TeluguTechies
+
+Kubernetes contains master and worker nodes...
+
+# Setup Kubernetes on Amazon EKS
+
+You can follow same procedure in the official  AWS document [Getting started with Amazon EKS – eksctl](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html)   
+
+#### Pre-requisites: 
+  - an EC2 Instance 
+
+#### AWS EKS Setup 
+1. Setup kubectl   
+   a. Download kubectl version 1.20  
+   b. Grant execution permissions to kubectl executable   
+   c. Move kubectl onto /usr/local/bin   
+   d. Test that your kubectl installation was successful    
+   ```sh 
+   curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+   chmod +x ./kubectl
+   mv ./kubectl /usr/local/bin 
+   kubectl version --short --client
+   ```
+2. Setup eksctl   
+   a. Download and extract the latest release   
+   b. Move the extracted binary to /usr/local/bin   
+   c. Test that your eksclt installation was successful   
+   ```sh
+   curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+   ```
+  
+3. Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+Attach IAM role to EC2
+4. Create your cluster and nodes 
+   ```sh
+   eksctl create cluster --name cluster-practise  \
+   --region us-east-2 \
+   --node-type t2.small \
+   --nodes-min 2 \
+   --nodes-max 2 \ 
+   --zones <AZ-1>,<AZ-2>
+   
+   example:
+   eksctl create cluster --name valaxy-cluster \
+      --region ap-south-1 \
+   --node-type t2.small \
+    ```
+
+5. To delete the EKS clsuter 
+   ```sh 
+   eksctl delete cluster valaxy --region ap-south-1
+   ```
+   
+6. Validate your cluster using by creating by checking nodes and by creating a pod 
+   ```sh 
+   kubectl get nodes
+   kubectl run pod tomcat --image=tomcat 
+   ```
+
+Delete cluster:
+eksctl delete cluster cluster-practise --region us-east-2
