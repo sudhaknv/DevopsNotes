@@ -37,4 +37,4 @@ As per architecture
 we will open complete subnet from public so that any instances in public can talk to private subnet...
 
 
-
+3.129.71.120

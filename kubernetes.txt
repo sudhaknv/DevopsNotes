@@ -98,15 +98,21 @@ Attach IAM role to EC2
    ```sh
    eksctl create cluster --name cluster-practise  \
    --region us-east-2 \
-   --node-type t2.small \
+   --node-type t2.micro \
+   --ssh-access \
+    --ssh-public-key myKeyPair
+
    --nodes-min 2 \
    --nodes-max 2 \ 
    --zones <AZ-1>,<AZ-2>
    
    example:
-   eksctl create cluster --name valaxy-cluster \
-      --region ap-south-1 \
-   --node-type t2.small \
+   eksctl create cluster --name sudhakar-cluster \
+      --region us-east-2 \
+	  --ssh-access \
+      --ssh-public-key aws-keypair
+	  --node-type t2.micro \
+   
     ```
 
 5. To delete the EKS clsuter 
@@ -122,3 +128,8 @@ Attach IAM role to EC2
 
 Delete cluster:
 eksctl delete cluster cluster-practise --region us-east-2
+
+
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+	

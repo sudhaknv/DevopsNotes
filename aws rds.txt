@@ -353,9 +353,7 @@ it will cache all the content like the videos or images etc. And, and other bulk
 
 amazon cloudfront:
 
-Amazon CloudFront is a web service that gives businesses and web application developers an easy and cost effective way to distribute content with low latency and high data 
-transfer speeds.
- 
+
 AWS Cloud Front----------->
 Amazon cloudfront is a webserive that speeds up distribution of your static and dynaminc web content,such as html,css, and image files to users...
 It mainly focuses on 3 things 1)Routing 2)Edge locations 3)More availability
@@ -720,6 +718,71 @@ sudo vi loadBalancer1.yml
 Here we have to only change app name in selector... Give selector appname of loadBalancer2 and kubectl apply.. U will see v2 changes to end customers...
 
 
+HelmCharts:
+Basically we use the Helm charts in order to perform the deployment and we specifically use the helm upgrade command and we actually currently using the kubernetes
+ continuous deployment plugin. And as part of this particular plugin, you have to give the helm command and there will be a drop down in the drop down you want to select which 
+ command you want to give to the helm binary and then you have to give the link for the helm template file and also the values file. So if you give the template file and values file,
+ and if you select the upgrade command from the drop down, and you also need to give the location for the cube configuration file. So these are all the mandatory things that you 
+ normally give as part of your job. Using rich Euro Jenkins slave will be able to connect to your kubernetes cluster and apply the latest Docker image using the helm upgrade command.
+
+
+
+Namespace: https://www.youtube.com/watch?v=uzPwsXHfVxQ
+   It will provide an isolated environment ..Consider 2 teams team A and B are working..Team A work prjct is dfrnt from team B..We will create name space for team A and another 
+   for Team B..Team A cant see resources in Team B and ViceVersa.
+   
+default is default namespace
+kubectl create namespace jenkins
+kubectl get namespaces or kubectl get ns --->will display all names of namespaces
+kubectl get all --all-namespaces  or kubectl get pods -A-->will display all namespaces pods and services...
+kubectl get pods -->If we are in default namespace it will only show namespaces which are in default
+kubectl get pods -n jenkins --->It will display all pod details which are in that namespace
+kubens jenkins ---->will cd to that namespace
+kubectl create -f .yaml file (In Yml file we will write for pod on which namespace it should be created..)-->pod will be created in mentioned namespace..
+kubectl config set-context -current--jenkins -->to switch to particular namespace ..(kubectl get pods will give details if we switched or not)
+kubens jenkins ---> to switch to jenkins namespace
+
+
+Kafka on kubernetes --->https://www.youtube.com/watch?v=8aZoMO2ulws
+kubectl create -f namespace.yml --->to create namespace with name kafka
+kubectl kafka
+
+Installing zookeeper on kafka
+
+kubectl create/apply -f .yml 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+labels:
+app: zookeeper
+name zookeeper
+namespace: kafka
+spec:
+replicas: 1
+selector:
+matchLabels:
+app: zookeeper
+template:
+metadata:
+labels:
+app: zookeeper
+spec:
+containers:
+- image: library/zookeeper: 3.4.13
+imagePullPolicy: IfNot Present
+name: zookeeper
+ports:
+- containerPort: 2181
+env:
+- name: ZOO_MY_ID
+value: "1"
+
+
+kubectl get deployments -->will show if zkp is deployed or not
+kubectl get pods --->will show status running/not ready
+kubectl get svc -->checking service..
+once service is up and running we can open zkp/kafka with ip:port
 
 -----------------------------------------------------------------------------------
 
@@ -1009,11 +1072,30 @@ Assume dev is ready with code and he wants to push code to github.com (central r
 1)working area   ----->this is where we are writing our files in local lappy
 2)staging area   -----> git add * or git add -A it will add files from working area to staging area..The staging area can be considered as a real area where git stores the changes.
 3)local repository ----> git commit -m "my 1st commit" it will mv fils from staging to local repo..
-4)
+
 
 git status --->if files are in red color it means its in working area...if its in green then staging area..
 
 
 navigate to git directory and give git init command 
-					
-                                                                          
+	
+create 4 files in directory and right click git bash here..	
+                                                                         
+git init
+ls -->will display list of files
+git status ---> will show in red as files are not moved to staging area..
+git add filename and git status now filename will be in green and rest of files will be shown in red..
+git commit -m "myfirstcommit" 
+git log -->it will display that file moved to local repository
+git remote add https://github.com/sudhaknv/gitnew.git (github repo url) ---> we are allocating github repo to tell send files to this repo
+git push -u origin master -->it will push data to github repo...
+
+
+
+collabateral access --->we have to provide access to repository to the team only who are working on that repo or project...
+to giev access -->select repo --->settings --->manage access-->invite a collaborator-->give username 
+
+
+
+
+
